@@ -71,8 +71,12 @@ class _HomeState extends State<Home> {
   }
 
   onTap(int pageIndex) {
-    pageController.jumpToPage(
-      pageIndex
+    pageController.animateToPage(
+      pageIndex,
+      duration: Duration(
+        milliseconds: 200
+      ),
+      curve: Curves.easeInOut
     );
   }
 
@@ -108,12 +112,6 @@ class _HomeState extends State<Home> {
         ],
       ),
     );
-    // return RaisedButton(
-    //     onPressed: logout,
-    //     child: Text(
-    //       'Logout'
-    //     ),
-    // );
   }
 
   Scaffold buildUnauthScreen() {
