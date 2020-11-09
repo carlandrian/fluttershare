@@ -13,10 +13,7 @@ class Timeline extends StatefulWidget {
 class _TimelineState extends State<Timeline> {
 
   void initState() {
-    print('START Firebase.initializeApp()');
-    Firebase.initializeApp();
-    print('END Firebase.initializeApp()');
-    getUsers();
+    getUserById();
     super.initState();
   }
 
@@ -31,7 +28,7 @@ class _TimelineState extends State<Timeline> {
 
   getUserById() async {
     final String id = "MvFxKpHysdlKSYUV79qP";
-    final DocumentSnapshot doc = await usersRef.firestore.doc(id).get();
+    final DocumentSnapshot doc = await usersRef.firestore.collection('users').doc(id).get();
 
     print(doc.data());
     print(doc.id);
