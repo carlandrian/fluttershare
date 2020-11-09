@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttershare/widgets/header.dart';
+import 'package:fluttershare/widgets/progress.dart';
 
 final Query usersRef = FirebaseFirestore.instance.collection('users');
 
@@ -11,35 +13,29 @@ class Timeline extends StatefulWidget {
 }
 
 class _TimelineState extends State<Timeline> {
-
   void initState() {
-    getUserById();
     super.initState();
-  }
-
-  getUsers() async {
-    print('getUsers');
-    await usersRef.get().then((QuerySnapshot snapshot) async {
-      snapshot.docs.forEach((DocumentSnapshot doc) {
-        print(doc.data());
-      });
-    });
-  }
-
-  getUserById() async {
-    final String id = "MvFxKpHysdlKSYUV79qP";
-    final DocumentSnapshot doc = await usersRef.firestore.collection('users').doc(id).get();
-
-    print(doc.data());
-    print(doc.id);
-    print(doc.exists);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: header(context, isAppTitle: true),
-      body: Text('Timeline'),
+      body: StreamBuilder<QuerySnapshot> (
+        stream: usersRef.snapshots(),
+        builder: (context, snapshot) {
+          if(!snapshot.hasData) {
+            return circularProgress();
+          }
+
+          final List<Text> children = snapshot.data.docs.map((doc) => Text(doc['username'])).toList();
+          return Container(
+            child: ListView(
+              children: children,
+            ),
+          );
+        }
+      ),
     );
   }
 }
