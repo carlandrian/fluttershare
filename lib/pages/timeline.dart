@@ -3,7 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttershare/widgets/header.dart';
 
-final Query usersRef = Firebase.instance.collection('users');
+final Query usersRef = FirebaseFirestore.instance.collection('users');
 
 class Timeline extends StatefulWidget {
   @override
@@ -22,11 +22,20 @@ class _TimelineState extends State<Timeline> {
 
   getUsers() async {
     print('getUsers');
-    await usersRef.getDocuments().then((QuerySnapshot snapshot) async {
-      snapshot.documents.forEach((DocumentSnapshot doc) {
+    await usersRef.get().then((QuerySnapshot snapshot) async {
+      snapshot.docs.forEach((DocumentSnapshot doc) {
         print(doc.data());
       });
     });
+  }
+
+  getUserById() async {
+    final String id = "MvFxKpHysdlKSYUV79qP";
+    final DocumentSnapshot doc = await usersRef.firestore.doc(id).get();
+
+    print(doc.data());
+    print(doc.id);
+    print(doc.exists);
   }
 
   @override
