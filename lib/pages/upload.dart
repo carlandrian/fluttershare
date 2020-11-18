@@ -140,7 +140,7 @@ class _UploadState extends State<Upload> {
 
   createPostInFireStore({String mediaUrl, String location, String description}) {
     postsRef.firestore
-        .collection('users')
+        .collection('posts')
         .doc(widget.currentUser.id)
         .collection('userPosts')
         .doc(postId)
