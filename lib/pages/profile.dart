@@ -20,16 +20,55 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileState extends State<Profile> {
+  bool isFollowing = false;
   final String currentUserId = currentUser?.id;
   bool isLoading = false;
   int postCount = 0;
   List<Post> posts = [];
   String postOrientation = "grid";
+  int followerCount = 0;
+  int followingCount = 0;
 
   @override
   void initState() {
     super.initState();
     getProfilePosts();
+    getFollowers();
+    getFollowing();
+    checkIfFollowing();
+  }
+
+  checkIfFollowing() async{
+    DocumentSnapshot doc = await followersRef.firestore.collection('followers')
+        .doc(widget.profileId)
+        .collection('userFollowers')
+        .doc(currentUserId)
+        .get();
+    setState(() {
+      isFollowing = doc.exists;
+    });
+  }
+
+  getFollowers() async {
+    QuerySnapshot snapshot = await followersRef.firestore.collection('followers')
+        .doc(widget.profileId)
+        .collection('userFollowers')
+        .get();
+
+    setState(() {
+      followerCount = snapshot.docs.length;
+    });
+  }
+
+  getFollowing() async {
+    QuerySnapshot snapshot = await followersRef.firestore.collection('following')
+        .doc(widget.profileId)
+        .collection('userFollowing')
+        .get();
+
+    setState(() {
+      followingCount = snapshot.docs.length;
+    });
   }
 
   getProfilePosts() async {
@@ -88,15 +127,15 @@ class _ProfileState extends State<Profile> {
           child: Text(
             text,
             style: TextStyle(
-              color: Colors.white,
+              color: isFollowing ? Colors.black : Colors.white,
               fontWeight: FontWeight.bold,
             ),
           ),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Colors.blue,
+            color: isFollowing ? Colors.white : Colors.blue,
             border: Border.all(
-              color: Colors.blue,
+              color: isFollowing ? Colors.grey : Colors.blue,
             ),
             borderRadius: BorderRadius.circular(5.0),
           ),
@@ -113,9 +152,92 @@ class _ProfileState extends State<Profile> {
         text: "Edit Profile",
         function: editProfile,
       );
-    }else{
-      return Text('');
+    }else if (isFollowing){
+      return buildButton(
+        text: "Unfollow",
+        function: handleUnfollowUser,
+      );
+    }else if(!isFollowing) {
+      return buildButton(
+        text: "Follow",
+        function: handleFollowUser,
+      );
     }
+  }
+
+  handleUnfollowUser() {
+    setState(() {
+      isFollowing = false;
+    });
+    // remove the follower
+    followersRef.firestore.collection('followers')
+        .doc(widget.profileId)
+        .collection('userFollowers')
+        .doc(currentUserId)
+        .get().then((doc) {
+       if(doc.exists) {
+         doc.reference.delete();
+       }
+    });
+
+    // remove the following
+    followingRef.firestore.collection('following')
+        .doc(currentUserId)
+        .collection('userFollowing')
+        .doc(widget.profileId)
+        .get().then((doc){
+          if(doc.exists) {
+            doc.reference.delete();
+          }
+    });
+
+    // delete activity feed item for them
+    activityFeedRef.firestore.collection('feed')
+        .doc(widget.profileId)
+        .collection('feed')
+        .doc(currentUserId)
+        .get().then((doc){
+          if(doc.exists) {
+            doc.reference.delete();
+          }
+    });
+  }
+
+  handleFollowUser() {
+    setState(() {
+      isFollowing = true;
+    });
+    // Make the auth user follower of ANOTHER user (update their followers collectio)
+    followersRef.firestore.collection('followers')
+      .doc(widget.profileId)
+    .collection('userFollowers')
+    .doc(currentUserId)
+    .set({
+
+    });
+
+    // Put THAT user on YOUR following collection (update your following collection)
+    followingRef.firestore.collection('following')
+      .doc(currentUserId)
+      .collection('userFollowing')
+      .doc(widget.profileId)
+      .set({
+
+    });
+
+    // add activity feed item for that user to notify about new follower (us)
+    activityFeedRef.firestore.collection('feed')
+      .doc(widget.profileId)
+      .collection('feed')
+      .doc(currentUserId)
+      .set({
+      'type': 'follow',
+      'ownerId': widget.profileId,
+      'username': currentUser.username,
+      'userId': currentUserId,
+      'userProfileImg': currentUser.photoUrl,
+      'timestamp': timestamp,
+    });
   }
 
   buildProfileHeader() {
@@ -147,8 +269,8 @@ class _ProfileState extends State<Profile> {
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
                               buildCountColumn("posts", postCount),
-                              buildCountColumn("followers", 0),
-                              buildCountColumn("following", 0),
+                              buildCountColumn("followers", followerCount),
+                              buildCountColumn("following", followingCount),
                             ],
                           ),
                           Row(
