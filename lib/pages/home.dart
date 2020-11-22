@@ -15,6 +15,7 @@ final GoogleSignIn googleSignIn = GoogleSignIn();
 final Query usersRef = FirebaseFirestore.instance.collection('users');
 final Query postsRef = FirebaseFirestore.instance.collection('posts');
 final Query commentsRef = FirebaseFirestore.instance.collection('comments');
+final Query activityFeedRef = FirebaseFirestore.instance.collection('feed');
 final Reference storageRef  = FirebaseStorage.instance.ref();
 final DateTime timestamp = DateTime.now();
 User currentUser;
