@@ -88,6 +88,7 @@ class _PostState extends State<Post> {
         }
 
         User user = User.fromDocument(snapshot.data);
+        bool isPostOwner = currentUserId == ownerId;
         return ListTile(
           leading: CircleAvatar(
             backgroundImage: CachedNetworkImageProvider(user.photoUrl),
@@ -104,13 +105,91 @@ class _PostState extends State<Post> {
             ),
           ),
           subtitle: Text(location),
-          trailing: IconButton(
-            onPressed: () => print('deleting post'),
+          trailing: isPostOwner ? IconButton(
+            onPressed: () => handleDeletePost(context),
             icon: Icon(Icons.more_vert),
-          ),
+          ) : Text(''),
         );
       },
     );
+  }
+
+  handleDeletePost(BuildContext parentContext) {
+    return showDialog(
+      context: parentContext,
+      builder: (context) {
+        return SimpleDialog(
+          title: Text('Remove this post?'),
+          children: [
+            SimpleDialogOption(
+              onPressed: () {
+                Navigator.pop(context);
+                deletePost();
+              },
+              child: Text(
+                'Delete',
+                style: TextStyle(
+                  color: Colors.red
+                ),
+              ),
+            ),
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Cancel',
+              ),
+            )
+          ],
+        );
+      }
+    );
+  }
+
+  // Note: to delete a post, ownerId must be currentUserId must be equal
+  deletePost() async {
+    // delete post itself
+    print('Deleting userPosts');
+    postsRef.firestore.collection('posts')
+        .doc(ownerId)
+        .collection('userPosts')
+        .doc(postId)
+        .get().then((doc) {
+       if(doc.exists) {
+         doc.reference.delete();
+       }
+    });
+    print('Successfully deleted userPosts');
+
+    print('Deleting image');
+    // delete the uploaded image for the post
+    storageRef.child('post_$postId.jpg').delete();
+    // then delete all activity feed notifications
+    QuerySnapshot activityFeedSnapshot = await activityFeedRef.firestore.collection('feed')
+      .doc(ownerId)
+      .collection('feedItems')
+      .where('postId', isEqualTo: postId)
+      .get();
+    
+    activityFeedSnapshot.docs.forEach((doc) {
+      if(doc.exists) {
+        doc.reference.delete();
+      }
+    });
+    print('Successfully deleted image');
+
+    // then delete all comments
+    print('Deleting comments');
+    QuerySnapshot commentsSnapshot = await commentsRef.firestore.collection('comments')
+      .doc(postId)
+    .collection('comments')
+    .get();
+
+    commentsSnapshot.docs.forEach((doc) {
+      if(doc.exists) {
+        doc.reference.delete();
+      }
+    });
+    print('Successfully deleted comments');
   }
 
   handleLikePost() {

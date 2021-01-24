@@ -59,8 +59,10 @@ class _HomeState extends State<Home> {
   createUserInFirestore() async {
     // 1) Check if user exists in users collection in database according to their id.
     final GoogleSignInAccount user = googleSignIn.currentUser;
+    print('user.id = ${user.id}');
     DocumentSnapshot doc = await usersRef.firestore
-        .collection('users').doc(user.id).get();
+        .collection('users')
+        .doc(user.id).get();
 
     if(!doc.exists) {
       // 2) if the user doesn't exist, then we want them to take to the create account page.
