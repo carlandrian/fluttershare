@@ -194,7 +194,7 @@ class _ProfileState extends State<Profile> {
     // delete activity feed item for them
     activityFeedRef.firestore.collection('feed')
         .doc(widget.profileId)
-        .collection('feed')
+        .collection('feedItems')
         .doc(currentUserId)
         .get().then((doc){
           if(doc.exists) {
@@ -228,7 +228,7 @@ class _ProfileState extends State<Profile> {
     // add activity feed item for that user to notify about new follower (us)
     activityFeedRef.firestore.collection('feed')
       .doc(widget.profileId)
-      .collection('feed')
+      .collection('feedItems')
       .doc(currentUserId)
       .set({
       'type': 'follow',
