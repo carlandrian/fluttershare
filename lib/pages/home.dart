@@ -7,6 +7,7 @@ import 'package:fluttershare/pages/activity_feed.dart';
 import 'package:fluttershare/pages/create_account.dart';
 import 'package:fluttershare/pages/profile.dart';
 import 'package:fluttershare/pages/search.dart';
+import 'package:fluttershare/pages/timeline.dart';
 // import 'package:fluttershare/pages/timeline.dart';
 import 'package:fluttershare/pages/upload.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -18,6 +19,7 @@ final Query commentsRef = FirebaseFirestore.instance.collection('comments');
 final Query activityFeedRef = FirebaseFirestore.instance.collection('feed');
 final Query followersRef = FirebaseFirestore.instance.collection('followers');
 final Query followingRef = FirebaseFirestore.instance.collection('following');
+final Query timelineRef = FirebaseFirestore.instance.collection('timeline');
 final Reference storageRef  = FirebaseStorage.instance.ref();
 final DateTime timestamp = DateTime.now();
 User currentUser;
@@ -84,6 +86,14 @@ class _HomeState extends State<Home> {
         "timestamp": timestamp,
       });
 
+      // make new user their own follower to include their post in their timeline
+      await followersRef.firestore
+        .collection('followers')
+        .doc(user.id)
+        .collection('userFollowers')
+        .doc(user.id)
+        .set({});
+
       doc = await usersRef.firestore
           .collection('users').doc(user.id).get();
     }
@@ -139,11 +149,7 @@ class _HomeState extends State<Home> {
     return Scaffold(
       body: PageView(
         children: [
-          // Timeline(),
-          RaisedButton(
-              onPressed: logout,
-            child: Text("Logout"),
-          ),
+          Timeline(currentUser: currentUser),
           ActivityFeed(),
           Upload(currentUser: currentUser),
           Search(),
